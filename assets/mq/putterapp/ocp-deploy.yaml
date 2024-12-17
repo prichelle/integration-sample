@@ -1,0 +1,47 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: java-mq-demo-putter
+  labels:
+    app: java-mq-demo-putter
+    app.kubernetes.io/name: java-mq-demo-putter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-mq-demo-putter
+  template:
+    metadata:
+      labels:
+        app: java-mq-demo-putter
+        deployment: java-mq-demo-putter
+    spec:
+      containers:
+        - name: putter
+          image: 'image-registry.openshift-image-registry.svc:5000/event/java-mq-demo:latest'
+          command:
+            - java
+          args:
+            - -cp
+            - /deployments/mq-demo-app-0.0.1-jar-with-dependencies.jar
+            - uk.co.dalelane.demos.ibmmq.Putter
+          env:
+            # connection details to IBM MQ
+            - name: MQ_HOST
+              value: mqm-demo-ibm-mq.event.svc.cluster.local
+            - name: MQ_PORT
+              value: '1414'
+            - name: MQ_QMGR
+              value: 'MQMDEMO'
+            - name: MQ_CHANNEL
+              value: CL.DEMO
+            - name: MQ_QUEUE
+              value: LQ.PRODUCT.ORDERS
+            # how frequently to PUT messages in millisec
+            - name: MSG_INTERVAL
+              value: '10000'
+            # config for what to put in messages
+            - name: TIMESTAMP_FORMAT
+              value: yyyy-MM-dd HH:mm:ss.SSS
+            - name: MAX_PRODUCTS
+              value: '10'

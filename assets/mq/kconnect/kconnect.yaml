@@ -1,0 +1,118 @@
+apiVersion: eventstreams.ibm.com/v1beta2
+kind: KafkaConnect
+metadata:
+  name: demo-mq
+spec:
+  authentication:
+    passwordSecret:
+      password: password
+      secretName: kafka-connect-user
+    type: scram-sha-512
+    username: kafka-connect-user
+  bootstrapServers: es-small-ibm-es-kp-bootstrap.event.svc:9095
+  build:
+    output:
+      image: image-registry.openshift-image-registry.svc:5000/event/demo-kconnect-cluster-image:latest
+      type: docker
+    plugins:
+    - artifacts:
+      - type: jar
+        url: https://github.com/IBM/kafka-connect-loosehangerjeans-source/releases/download/0.0.1/kafka-connect-loosehangerjeans-source-0.0.1-jar-with-dependencies.jar
+      name: datagen
+    - artifacts:
+      - type: jar
+        url: https://github.com/ibm-messaging/kafka-connect-mq-source/releases/download/v2.1.0/kafka-connect-mq-source-2.1.0-jar-with-dependencies.jar
+      - type: jar
+        url: https://github.com/ibm-messaging/kafka-connect-xml-converter/releases/download/0.1.0/kafka-connect-xml-converter-0.1.0-jar-with-dependencies.jar
+      name: mq-source
+    - artifacts:
+      - type: jar
+        url: https://github.com/ibm-messaging/kafka-connect-mq-sink/releases/download/v2.2.1/kafka-connect-mq-sink-2.2.1-jar-with-dependencies.jar
+      - type: jar
+        url: https://github.com/ibm-messaging/kafka-connect-xml-converter/releases/download/0.1.0/kafka-connect-xml-converter-0.1.0-jar-with-dependencies.jar
+      name: mq-sink
+  config:
+    client.id: kafka-connect-client
+    config.storage.topic: connect-configs
+    group.id: kafka-connect
+    offset.storage.topic: connect-offsets
+    status.storage.topic: connect-status
+  externalConfiguration:
+    volumes:
+    - configMap:
+        name: ibmmq-schemas
+      name: connect-schemas-ibmmq
+  replicas: 1
+  resources:
+    limits:
+      cpu: 2048m
+      memory: 2Gi
+    requests:
+      cpu: 2048m
+      memory: 2Gi
+  template:
+    buildConfig:
+      pullSecret: ibm-entitlement-key
+    connectContainer:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+    pod:
+      imagePullSecrets: []
+      metadata:
+        annotations:
+          cloudpakId: c8b82d189e7545f0892db9ef2731b90d
+          cloudpakName: IBM Cloud Pak for Integration
+          eventstreams.production.type: CloudPakForIntegrationNonProduction
+          productChargedContainers: jgr-connect-cluster-connect
+          productCloudpakRatio: "2:1"
+          productID: 2a79e49111f44ec3acd89608e56138f5
+          productMetric: VIRTUAL_PROCESSOR_CORE
+          productName: IBM Event Streams for Non Production
+          productVersion: 11.3.0
+  tls:
+    trustedCertificates:
+    - certificate: ca.crt
+      secretName: es-small-cluster-ca-cert
+status:
+  conditions:
+  - lastTransitionTime: "2024-12-16T08:43:36.738171891Z"
+    message: Secret kafka-connect-user not found in namespace event
+    reason: InvalidConfigurationException
+    status: "True"
+    type: NotReady
+  - lastTransitionTime: "2024-12-16T08:43:35.283418914Z"
+    message: In resource KafkaConnect(event/demo-kconnect-cluster) in API version
+      eventstreams.ibm.com/v1beta2 the externalConfiguration property at path spec.externalConfiguration
+      has been deprecated. The external configuration is deprecated and will be removed
+      in the future. Please use the template section instead to configure additional
+      environment variables or volumes.
+    reason: DeprecatedFields
+    status: "True"
+    type: Warning
+  - lastTransitionTime: "2024-12-16T08:43:35.283418914Z"
+    message: In resource KafkaConnect(event/demo-kconnect-cluster) in API version
+      eventstreams.ibm.com/v1beta2 the object externalConfiguration at path spec.externalConfiguration
+      has been deprecated. This object has been replaced with KafkaConnectTemplate.
+    reason: DeprecatedObjects
+    status: "True"
+    type: Warning
+  - lastTransitionTime: "2024-12-16T08:43:35.283418914Z"
+    message: In resource KafkaConnect(event/demo-kconnect-cluster) in API version
+      eventstreams.ibm.com/v1beta2 the volumes property at path spec.externalConfiguration.volumes
+      has been deprecated. The external configuration volumes are deprecated and will
+      be removed in the future. Please use the additional volumes and volume mounts
+      in pod and container templates instead to mount additional secrets or config
+      maps.
+    reason: DeprecatedFields
+    status: "True"
+    type: Warning
+  labelSelector: eventstreams.ibm.com/kind=KafkaConnect,eventstreams.ibm.com/name=demo-kconnect-cluster-connect,eventstreams.ibm.com/cluster=demo-kconnect-cluster
+  observedGeneration: 15
+  replicas: 1
+  url: http://demo-kconnect-cluster-connect-api.event.svc:8083

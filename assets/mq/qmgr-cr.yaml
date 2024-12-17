@@ -1,0 +1,42 @@
+apiVersion: mq.ibm.com/v1beta1
+kind: QueueManager
+metadata:
+  name: mqm-demo
+spec:
+  license:
+    accept: true
+    license: L-JTPV-KYG8TF
+    metric: VirtualProcessorCore
+    use: NonProduction
+  queueManager:
+    metrics:
+      enabled: false
+    mqsc:
+    - configMap:
+        items:
+        - mqm-demo.mqsc
+        name: mqm-demo-mqsc
+    name: MQMDEMO
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 1000m
+        memory: 1Gi
+    route:
+      enabled: true
+    storage:
+      queueManager:
+        type: ephemeral
+  version: 9.4.0.6-r1
+  web:
+    console:
+      authentication:
+        provider: manual
+      authorization:
+        provider: manual
+    manualConfig:
+      configMap:
+        name: mqm-demo-mq-web
+    enabled: true
